@@ -118,7 +118,7 @@ app.get('/signup',(req,res) => {
     <form action='/submitUserSignup' method='post'>
         <input name='username' type='text' placeholder='name'>
         <p>\n</p>
-        <input name='email' type='email' placeholder='email'>
+        <input name='email' type='text' placeholder='email'>
         <p>\n</p>
         <input name='pwd' type='password' placeholder='password'>
         <p>\n</p>
@@ -151,7 +151,20 @@ app.post('/submitUserSignup', async (req,res) => {
    
     var email = req.body.email;
     var password = req.body.pwd;
+    const schema = Joi.object(
+        {
+            username: Joi.string().alphanum().max(20).required(),
+            password: Joi.string().max(20).required(),
+            email: Joi.string().email().max(20).required()
+        });
     
+    const validationResult = schema.validate({name, password,email});
+    if (validationResult.error != null) {
+       console.log(validationResult.error);
+       res.redirect("/signup");
+       return;
+   }
+   
     const result = await userCollection.find({username: name}).project({username: 1, password: 1, _id: 1}).toArray();
     if (!name) {
         res.redirect('/userInfo?missing=name');
@@ -162,21 +175,6 @@ app.post('/submitUserSignup', async (req,res) => {
     } else if(result.length == 1) {
         res.redirect('/userInfo?user=duplicate');
     }
-    else {
-
-        const schema = Joi.object(
-            {
-                username: Joi.string().alphanum().max(20).required(),
-                password: Joi.string().max(20).required(),
-                email: Joi.string().email().max(20).required()
-            });
-        
-        const validationResult = schema.validate({name, password,email});
-        if (validationResult.error != null) {
-           console.log(validationResult.error);
-           res.redirect("/signup");
-           return;
-       }
 
         var hashedPassword = await bcrypt.hash(password, rounding);
 	    await userCollection.insertOne({username: name, email: email, password: hashedPassword});
@@ -186,14 +184,14 @@ app.post('/submitUserSignup', async (req,res) => {
         req.session.cookie.maxAge = timeUntilExpires;
         console.log(req.session.cookie.maxAge);
         res.redirect(`/members`)
-    }
+    
 });
 
 app.get('/login',(req,res) => {
     var form = `
     Log In
     <form action='/loggingIn' method='post'>
-        <input name='email' type='email' placeholder='email'>
+        <input name='email' type='text' placeholder='email'>
         <p>\n</p>
         <input name='pwd' type='password' placeholder='password'>
         <p>\n</p>
