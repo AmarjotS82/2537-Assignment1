@@ -1,8 +1,10 @@
+require('dotenv').config();
+
 const express = require('express');
 
 const session = require('express-session');
 
-require('dotenv').config();
+
 
 require("./absoluteFile.js");
 
@@ -28,7 +30,7 @@ const rounding = 12;
 
 const bcrypt = require('bcrypt');
 
-const port = process.env.PORT;
+const port = process.env.PORT || 3000;
 
 const timeUntilExpires =  60 * 60 * 1000;
 
