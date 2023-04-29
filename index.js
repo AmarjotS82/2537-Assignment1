@@ -153,9 +153,9 @@ app.post('/submitUserSignup', async (req,res) => {
     var password = req.body.pwd;
     const schema = Joi.object(
         {
-            username: Joi.string().alphanum().max(20).required(),
-            password: Joi.string().max(20).required(),
-            email: Joi.string().email().max(20).required()
+            username: Joi.string().alphanum().max(20),
+            password: Joi.string().max(20),
+            email: Joi.string().email().max(20)
         });
     
     const validationResult = schema.validate({name, password,email});
@@ -164,7 +164,7 @@ app.post('/submitUserSignup', async (req,res) => {
        res.redirect("/signup");
        return;
    }
-   
+
     const result = await userCollection.find({username: name}).project({username: 1, password: 1, _id: 1}).toArray();
     if (!name) {
         res.redirect('/userInfo?missing=name');
