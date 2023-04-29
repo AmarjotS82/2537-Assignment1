@@ -28,7 +28,7 @@ const rounding = 12;
 
 const bcrypt = require('bcrypt');
 
-const port = 3000;
+const port = process.env.PORT;
 
 const timeUntilExpires =  60 * 60 * 1000;
 
