@@ -132,17 +132,17 @@ app.get('/signup',(req,res) => {
 app.get('/userInfo', (req,res) => {
     var missingInfo = req.query.missing;
     var userStatus = req.query.user;
-    
+    var html ='';
     if (missingInfo == 'name') {
-        var html = "<b>name is required</b>";
+         html += "<b>name is required</b>";
     } else if(missingInfo == 'email'){
-        var html = " <b>email</b> is required</b>";
+        html += " <b>email is required</b>";
     }else if(missingInfo == 'password'){
-       var html = "<b>password is required</b>";
-    } else if(userStatus = "duplicate"){
-        var html = "The <b>username already exists, please try a different username!</b>";
+        html += "<b>password is required</b>";
+    } else if(userStatus == "duplicate"){
+        html += "The <b>username already exists, please try a different username!</b>";
     }
-    html += `<br> <a style=color:blue; href= /signup>Try again</a>`
+    html += `<br> <a style='color:blue;' href='/signup'>Try again</a>`;
     res.send(html);
 });
 
@@ -151,20 +151,6 @@ app.post('/submitUserSignup', async (req,res) => {
    
     var email = req.body.email;
     var password = req.body.pwd;
-    const schema = Joi.object(
-        {
-            username: Joi.string().alphanum().max(20),
-            password: Joi.string().max(20),
-            email: Joi.string().email().max(20)
-        });
-    
-    const validationResult = schema.validate({name, password,email});
-    if (validationResult.error != null) {
-       console.log(validationResult.error);
-       res.redirect("/signup");
-       return;
-   }
-
     const result = await userCollection.find({username: name}).project({username: 1, password: 1, _id: 1}).toArray();
     if (!name) {
         res.redirect('/userInfo?missing=name');
@@ -174,16 +160,32 @@ app.post('/submitUserSignup', async (req,res) => {
         res.redirect('/userInfo?missing=password');
     } else if(result.length == 1) {
         res.redirect('/userInfo?user=duplicate');
+    } else {
+        const schema = Joi.object(
+                    {
+                        username: Joi.string().allow('').alphanum().max(20),
+                        password: Joi.string().allow('').max(20),
+                        email: Joi.string().allow('').email().max(20)
+                    });
+                
+                const validationResult = schema.validate({name, password,email});
+                console.log(validationResult);
+                if (validationResult.error != null) {
+                   //console.log(validationResult.error);
+                   res.redirect("/signup");
+                   return;
+               } else{
+                console.log("trying to insert");
+                var hashedPassword = await bcrypt.hash(password, rounding);
+                await userCollection.insertOne({username: name, email: email, password: hashedPassword});
+                console.log("Inserted user");
+                req.session.username = name;
+                console.log(timeUntilExpires);
+                req.session.cookie.maxAge = timeUntilExpires;
+                console.log(req.session.cookie.maxAge);
+                res.redirect(`/members`)
+               }
     }
-
-        var hashedPassword = await bcrypt.hash(password, rounding);
-	    await userCollection.insertOne({username: name, email: email, password: hashedPassword});
-	    console.log("Inserted user");
-        req.session.username = name;
-        console.log(timeUntilExpires);
-        req.session.cookie.maxAge = timeUntilExpires;
-        console.log(req.session.cookie.maxAge);
-        res.redirect(`/members`)
     
 });
 
@@ -203,11 +205,14 @@ app.get('/login',(req,res) => {
 
 app.get('/submitLogin', (req,res) => {
     var athenticationState = req.query.authentication;
-   
+    var html=''
     if (athenticationState == 'failed') {
-        var html = "<br> Email or Password not found!";
+        html += "<br> Email or Password not found!";
+        html += `<br> <a style='color:blue;' href= '/login'>Try again</a>`;
     } 
-    html += `<br> <a style=color:blue; href= /login>Try again</a>`
+    else{
+        return;
+    }
     res.send(html);
 });
 
