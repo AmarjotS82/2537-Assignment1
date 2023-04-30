@@ -167,8 +167,8 @@ app.post('/submitUserSignup', async (req,res) => {
                         password: Joi.string().allow('').max(20),
                         email: Joi.string().allow('').email().max(20)
                     });
-                
-                const validationResult = schema.validate({name, password,email});
+                console.log("Name: " + name);
+                const validationResult = schema.validate({username: name, password,email});
                 console.log(validationResult);
                 if (validationResult.error != null) {
                    //console.log(validationResult.error);
@@ -183,7 +183,11 @@ app.post('/submitUserSignup', async (req,res) => {
                 console.log(timeUntilExpires);
                 req.session.cookie.maxAge = timeUntilExpires;
                 console.log(req.session.cookie.maxAge);
-                res.redirect(`/members`)
+                req.session.authenticated = true;
+                console.log("Added session");
+                res.redirect(`/members`);
+                console.log("redirecting ...");
+                console.log("Eror: " + validationResult);
                }
     }
     
@@ -222,14 +226,15 @@ app.post('/loggingIn', async (req,res) => {
     var email = req.body.email;
 
     var password = req.body.pwd;
-    
+
     const schema = Joi.object(
         {
             password: Joi.string().max(20).required(),
             email: Joi.string().email().max(20).required()
         });
-    
+
     const validationResult = schema.validate({ password,email});
+
 	if (validationResult.error != null) {
 	   console.log(validationResult.error);
 	   res.redirect("/login");
@@ -237,6 +242,7 @@ app.post('/loggingIn', async (req,res) => {
 	}
 
     const result = await userCollection.find({email: email}).project({username: 1, password: 1}).toArray();
+
     if (result.length != 1) {
 		console.log("email not found");
 		res.redirect("/submitLogin?authentication=failed");
