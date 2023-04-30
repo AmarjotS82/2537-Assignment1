@@ -56,7 +56,7 @@ app.use(session({
 }
 ));
 app.get('/', (req,res) => {
-    console.log(req.session.authenticated);
+    
     var name = req.session.username;
     if (!req.session.authenticated) {
         var html = `
@@ -298,6 +298,7 @@ app.get('/logout',(req,res) => {
 app.use(express.static(__dirname + "/public"));
 
 app.get('/*',(req,res) => {
+    res.status(404);
    res.send(`Page not found - 404`)
 })
 
